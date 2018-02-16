@@ -1,12 +1,8 @@
 package com.stalex
 
-import io.reactivex.Observable
-import io.reactivex.Observer
-import kotlin.coroutines.experimental.buildSequence
-
 typealias PipelineChain<E> = MutableList<PipelineLink<E>>
 
-class DefaultPipeline<E : EmitItem>(
+class DefaultPipeline<E : SourceItem>(
     private val chain: PipelineChain<E> = mutableListOf()
 ) : Pipeline<DefaultPipeline<E>, E> {
 
@@ -32,11 +28,11 @@ class DefaultPipeline<E : EmitItem>(
     }
 }
 
-interface AdSource<out E : EmitItem> {
+interface AdSource<out E : SourceItem> {
     fun subscribe(handler: (E) -> Unit)
 }
 
-interface Pipeline<T : Pipeline<T, E>, E : EmitItem> {
+interface Pipeline<T : Pipeline<T, E>, E : SourceItem> {
     fun withSource(source: AdSource<E>): T
     fun with(link: PipelineLink<E>): T
     fun start()
@@ -47,74 +43,38 @@ interface PipelineLink<E> {
     fun handle(e: E)
 }
 
-interface EmitItem
+class AvitoItem : SourceItem {
 
-class AvitoItem : EmitItem {
     var id: Int = 0
 }
 
-interface SourceMart
-
-interface RefPage
-class RefPageImpl : RefPage
-
-interface RefItem
-class RefItemImpl : RefItem
-
-typealias SourceItem = AvitoItem
-typealias RefItemProvider = (RefPage) -> List<RefItem>
-typealias RefPageProvider = (Int) -> RefPage
-
-typealias EndItemLoader = (RefItem) -> SourceItem
-
-fun itemSeq(
-    pageProvider: RefPageProvider,
-    itemProvider: RefItemProvider,
-    loader: EndItemLoader
-
-): Sequence<SourceItem> = buildSequence {
-
-    val pageSequence: Sequence<RefPage> = buildSequence {
-        (0..100).forEach { page ->
-            val refPage: RefPage = pageProvider(page)
-            yield(refPage)
-        }
-    }
-
-    pageSequence.iterator().forEach { page ->
-        itemProvider(page).forEach { item ->
-            yield(loader(item))
-        }
-    }
-}
-
-typealias StopPredicate = (AvitoItem?) -> Boolean
-
-class AvitoObservable : Observable<AvitoItem>() {
+//
+//AvitoRefPageProvider(),
+//AvitoRefItemProvider(),
+//AvitoItemLoader()
+//class AvitoRefItemProvider : RefItemProvider {
+//    override fun invoke(p1: RefPage): List<RefItem> {
+//        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+//    }
+//
+//}
+//
+//
+//class AvitoRefPageProvider : RefPageProvider {
+//    override fun invoke(p1: Int): RefPage {
+//        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+//    }
+//
+//}
 
 
-    private var sell = 100000L
-
-
-    override fun subscribeActual(p0: Observer<in AvitoItem>?) {
-//        itemSeq()
-    }
-
-}
-
-class ObservableSource(val observable: Observable<AvitoItem>) : AdSource<AvitoItem> {
-    override fun subscribe(handler: (AvitoItem) -> Unit) {
-        observable.subscribe(handler)
-    }
-
-}
-
-interface AdStorer<T : EmitItem> : PipelineLink<T>
-interface AdLogger<T : EmitItem> : PipelineLink<T>
+interface AdStorer<T : SourceItem> : PipelineLink<T>
+interface AdLogger<T : SourceItem> : PipelineLink<T>
 
 class MemoryStorer : AdStorer<AvitoItem> {
+    val list = mutableListOf<AvitoItem>()
     override fun handle(e: AvitoItem) {
-        print("stored $e")
+        list += e
     }
 }
 
