@@ -7,22 +7,39 @@ interface SourceItem
 interface SourceMart
 
 interface RefPage
-class RefPageImpl : RefPage
+class RefPageImpl(val url: String) : RefPage
 
 interface RefItem
 data class RefItemImpl(val id: String) : RefItem
 
-typealias RefItemProvider = (RefPage) -> List<RefItem>
-typealias RefPageProvider = (Int) -> RefPage
-
-interface EndItemLoader<out T : SourceItem> {
-    fun load(ref: RefItem) : T
+interface RefItemProvider<in T : RefPage, out R : RefItem> {
+    fun get(page: T): List<R>
 }
 
-class SyncObservable <out S: SourceItem> (
-    private val pageProvider: RefPageProvider,
-    private val itemProvider: RefItemProvider,
-    private val loader: EndItemLoader<S>,
+interface RefPageProvider<out T : RefPage> {
+    fun get(index: Int): T
+}
+
+interface EndItemProvider<in R : RefItem, out T : SourceItem> {
+    fun load(ref: R): T
+}
+
+fun <S : SourceItem, P : RefPage, R : RefItem> createSyncObservable(
+    pageProviderFactory: () -> RefPageProvider<P>,
+    itemProviderFactory: () -> RefItemProvider<P, R>,
+    loaderFactory: () -> EndItemProvider<R, S>,
+    stopCondition: ((SourceItem) -> Boolean)? = null
+) = SyncObservable(
+    pageProviderFactory(),
+    itemProviderFactory(),
+    loaderFactory(),
+    stopCondition
+)
+
+class SyncObservable<out S : SourceItem, P : RefPage, R : RefItem>(
+    private val pageProvider: RefPageProvider<P>,
+    private val itemProvider: RefItemProvider<P, R>,
+    private val loader: EndItemProvider<R, S>,
     private val stopCondition: ((SourceItem) -> Boolean)? = null
 ) : AdSource<S> {
 
@@ -40,15 +57,15 @@ class SyncObservable <out S: SourceItem> (
 
     fun itemSeq(): Sequence<S> = buildSequence {
 
-        val pageSequence: Sequence<RefPage> = buildSequence {
+        val pageSequence: Sequence<P> = buildSequence {
             (0..100).forEach { page ->
-                val refPage: RefPage = pageProvider(page)
+                val refPage: P = pageProvider.get(page)
                 yield(refPage)
             }
         }
 
         pageSequence.iterator().forEach { page ->
-            itemProvider(page).forEach { item ->
+            itemProvider.get(page).forEach { item ->
                 println("loading in ${Thread.currentThread()}")
                 yield(loader.load(item))
             }

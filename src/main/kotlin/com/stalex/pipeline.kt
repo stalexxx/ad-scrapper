@@ -1,29 +1,35 @@
 package com.stalex
 
+import com.stalex.avito.AvitoSourceItem
+import org.litote.kmongo.KMongo
+import org.litote.kmongo.getCollection
+
 typealias PipelineChain<E> = MutableList<PipelineLink<E>>
 
 class DefaultPipeline<E : SourceItem>(
     private val chain: PipelineChain<E> = mutableListOf()
 ) : Pipeline<DefaultPipeline<E>, E> {
-
+    
     var source: AdSource<E>? = null
-
+    
     override fun withSource(source: AdSource<E>): DefaultPipeline<E> {
         this.source = source
         return this
     }
-
+    
     override fun with(link: PipelineLink<E>): DefaultPipeline<E> {
         this.chain += link
         return this
     }
-
+    
     override fun start() {
         source?.subscribe { e ->
             this.chain
                 .stream()
-                .parallel()
-                .forEach { it.handle(e) }
+                .sequential()
+                .forEach {
+                    it.handle(e)
+                }
         }
     }
 }
@@ -43,15 +49,10 @@ interface PipelineLink<E> {
     fun handle(e: E)
 }
 
-class AvitoItem : SourceItem {
-
-    var id: Int = 0
-}
-
 //
 //AvitoRefPageProvider(),
 //AvitoRefItemProvider(),
-//AvitoItemLoader()
+//AvitoSourceItemLoader()
 //class AvitoRefItemProvider : RefItemProvider {
 //    override fun invoke(p1: RefPage): List<RefItem> {
 //        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
@@ -71,17 +72,30 @@ class AvitoItem : SourceItem {
 interface AdStorer<T : SourceItem> : PipelineLink<T>
 interface AdLogger<T : SourceItem> : PipelineLink<T>
 
-class MemoryStorer : AdStorer<AvitoItem> {
-    val list = mutableListOf<AvitoItem>()
-    override fun handle(e: AvitoItem) {
+class MongoStorer : AdStorer<AvitoSourceItem> {
+    
+    companion object {
+        val client = KMongo.createClient()
+        val database = client.getDatabase("avito")!!
+        val collection = database.getCollection<AvitoSourceItem>()
+    }
+    
+    override fun handle(e: AvitoSourceItem) {
+        collection.insertOne(e)
+    }
+}
+
+class MemoryStorer : AdStorer<AvitoSourceItem> {
+    val list = mutableListOf<AvitoSourceItem>()
+    override fun handle(e: AvitoSourceItem) {
         list += e
     }
 }
 
-class ConsoleAdLogger : AdLogger<AvitoItem> {
-    override fun handle(e: AvitoItem) {
+class ConsoleAdLogger : AdLogger<AvitoSourceItem> {
+    override fun handle(e: AvitoSourceItem) {
         print("stored $e")
     }
-
+    
 }
 

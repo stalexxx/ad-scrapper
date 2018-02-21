@@ -1,5 +1,6 @@
 package com.stalex
 
+import com.stalex.avito.AvitoSourceItem
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
 import io.mockk.every
@@ -9,16 +10,16 @@ import io.mockk.verify
 class AdSourceTest : StringSpec() {
     init {
 
-        val storer: AdStorer<AvitoItem> = mockk<MemoryStorer>()
+        val storer: AdStorer<AvitoSourceItem> = mockk<MemoryStorer>()
         every { storer.handle(any()) } returns Unit
-        val logger: AdLogger<AvitoItem> = mockk<ConsoleAdLogger>()
+        val logger: AdLogger<AvitoSourceItem> = mockk<ConsoleAdLogger>()
         every { logger.handle(any()) } returns Unit
 
-        val pipeline = DefaultPipeline<AvitoItem>()
+        val pipeline = DefaultPipeline<AvitoSourceItem>()
             .withSource(
-                object : AdSource<AvitoItem> {
-                    override fun subscribe(handler: (AvitoItem) -> Unit) {
-                        (1..100).map { AvitoItem() }.forEach(handler)
+                object : AdSource<AvitoSourceItem> {
+                    override fun subscribe(handler: (AvitoSourceItem) -> Unit) {
+                        (1..100).map { AvitoSourceItem("url") }.forEach(handler)
                     }
                 }
             )
@@ -37,14 +38,14 @@ class AdSourceTest : StringSpec() {
 
 class LasySeqAbstractionTest : StringSpec() {
     init {
-        val pageProvider: RefPageProvider = mockk()
-        every { pageProvider.invoke(any()) } returns RefPageImpl()
+        val pageProvider: RefPageProvider<RefPageImpl> = mockk()
+        every { pageProvider.get(any()) } returns RefPageImpl("url")
 
-        val itemProvider: RefItemProvider = mockk()
-        every { itemProvider.invoke(any()) } returns (1 .. 5).map { RefItemImpl("$it") }
+        val itemProvider: RefItemProvider<RefPage, RefItem> = mockk()
+        every { itemProvider.get(any()) } returns (1 .. 5).map { RefItemImpl("$it") }
 
-        val loader: EndItemLoader<AvitoItem> = mockk()
-        every { loader.load(any()) } returns AvitoItem()
+        val loader: EndItemProvider<RefItem, SourceItem> = mockk()
+        every { loader.load(any()) } returns AvitoSourceItem("url")
 
 
         "itemSeq coroutine test" {

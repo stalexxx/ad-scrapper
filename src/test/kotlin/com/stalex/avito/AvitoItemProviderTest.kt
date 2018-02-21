@@ -5,17 +5,17 @@ import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
 
-class AvitoItemProviderTest : StringSpec() {
+class AvitoSourceItemProviderTest : StringSpec() {
     init {
         val file = javaClass.classLoader.getResource("nedvizhimost").file
-        val provider = AvitoItemProvider(file)
-        val result = provider(RefPageImpl())
+        val provider = AvitoSourceItemProvider()
+        val result = provider.get(RefPageImpl(file))
         "test size file" {
             result.size shouldBe 51
         }
 
-        val urlProvider = AvitoItemProvider("https://www.avito.ru/sankt-peterburg/nedvizhimost")
-        val urlResult = urlProvider(RefPageImpl())
+        val urlProvider = AvitoSourceItemProvider()
+        val urlResult = urlProvider.get(RefPageImpl("https://www.avito.ru/sankt-peterburg/nedvizhimost"))
         "test size url" {
             urlResult.size should {
                 it in 1..100
