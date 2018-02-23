@@ -4,9 +4,12 @@ import com.stalex.RefPageImpl
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
+import nolambda.skrape.SkrapeLogger
 
 class AvitoSourceItemProviderTest : StringSpec() {
     init {
+        SkrapeLogger.enableLog = false
+    
         val file = javaClass.classLoader.getResource("nedvizhimost").file
         val provider = AvitoSourceItemProvider()
         val result = provider.get(RefPageImpl(file))

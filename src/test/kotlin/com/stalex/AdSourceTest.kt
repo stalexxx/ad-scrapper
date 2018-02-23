@@ -3,24 +3,24 @@ package com.stalex
 import com.stalex.avito.AvitoSourceItem
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
+import io.mockk.*
 import kotlinx.coroutines.experimental.runBlocking
 
 class AdSourceTest : StringSpec() {
     init {
 
         val storer: AdStorer<AvitoSourceItem> = mockk()
-        every { storer.handle(any()) } returns Unit
+        coEvery { storer.handle(any()) } returns Unit
         val logger: AdLogger<AvitoSourceItem> = mockk<ConsoleAdLogger>()
-        every { logger.handle(any()) } returns Unit
+        coEvery { logger.handle(any()) } returns Unit
 
         val pipeline = DefaultPipeline<AvitoSourceItem>()
             .withSource(
                 object : AdSource<AvitoSourceItem> {
-                    override suspend fun subscribe(handler: (AvitoSourceItem) -> Unit) {
-                        (1..100).map { AvitoSourceItem("url") }.forEach(handler)
+                    override suspend fun subscribe(handler: suspend (AvitoSourceItem) -> Unit) {
+                        (1..10).map { AvitoSourceItem("url") }.forEach{
+                            handler(it)
+                        }
                     }
                 }
             )
@@ -31,7 +31,7 @@ class AdSourceTest : StringSpec() {
             runBlocking {
                 pipeline.start()
     
-                verify(exactly = 100) {
+                coVerify(exactly = 10) {
                     logger.handle(any())
                     storer.handle(any())
                 }

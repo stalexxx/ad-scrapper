@@ -25,18 +25,15 @@ class DefaultPipeline<E : SourceItem>(
     
     override suspend fun start() {
         source?.subscribe { e ->
-            this.chain
-                .stream()
-                .sequential()
-                .forEach {
-                    it.handle(e)
-                }
+            for (it in this.chain) {
+                it.handle(e)
+            }
         }
     }
 }
 
 interface AdSource<out E : SourceItem> {
-    suspend fun subscribe(handler: (E) -> Unit)
+    suspend fun subscribe(handler: suspend (E) -> Unit)
 }
 
 interface Pipeline<T : Pipeline<T, E>, E : SourceItem> {
@@ -47,28 +44,8 @@ interface Pipeline<T : Pipeline<T, E>, E : SourceItem> {
 
 
 interface PipelineLink<E> {
-    fun handle(e: E)
+    suspend fun handle(e: E)
 }
-
-//
-//AvitoRefPageProvider(),
-//AvitoRefItemProvider(),
-//AvitoSourceItemLoader()
-//class AvitoRefItemProvider : RefItemProvider {
-//    override fun invoke(p1: RefPage): List<RefItem> {
-//        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-//    }
-//
-//}
-//
-//
-//class AvitoRefPageProvider : RefPageProvider {
-//    override fun invoke(p1: Int): RefPage {
-//        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-//    }
-//
-//}
-
 
 interface AdStorer<T : SourceItem> : PipelineLink<T>
 interface AdLogger<T : SourceItem> : PipelineLink<T>
@@ -81,7 +58,7 @@ class MongoStorer : AdStorer<AvitoSourceItem> {
         val collection = database.getCollection<AvitoSourceItem>()
     }
     
-    override fun handle(e: AvitoSourceItem) {
+    override suspend fun handle(e: AvitoSourceItem) {
         collection.insertOne(e)
     }
 }
@@ -89,7 +66,7 @@ class MongoStorer : AdStorer<AvitoSourceItem> {
 class ConsoleAdLogger : AdLogger<AvitoSourceItem> {
     private val logger = KotlinLogging.logger {}
     
-    override fun handle(e: AvitoSourceItem) {
+    override suspend fun handle(e: AvitoSourceItem) {
         logger.info {
             e
         }

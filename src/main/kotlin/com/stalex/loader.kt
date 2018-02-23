@@ -1,6 +1,5 @@
 package com.stalex
 
-import kotlinx.coroutines.experimental.delay
 import kotlin.coroutines.experimental.buildSequence
 
 interface SourceItem
@@ -23,15 +22,18 @@ interface EndItemProvider<in R : RefItem, out T : SourceItem> {
     fun load(ref: R): T
 }
 
-fun <S : SourceItem, P : RefPage, R : RefItem> createSyncObservable(
-    pageProviderFactory: () -> RefPageProvider<P>,
-    itemProviderFactory: () -> RefItemProvider<P, R>,
-    loaderFactory: () -> EndItemProvider<R, S>,
+interface LoaderFactory<out S : SourceItem, P : RefPage, R : RefItem> {
+    fun pageProvider(): RefPageProvider<P>
+    fun itemProvider(): RefItemProvider<P, R>
+    fun loader(): EndItemProvider<R, S>
+}
+
+fun <S : SourceItem, P : RefPage, R : RefItem> LoaderFactory<S, P, R>.createSyncObservable(
     stopCondition: ((SourceItem) -> Boolean)? = null
 ) = SyncObservable(
-    pageProviderFactory(),
-    itemProviderFactory(),
-    loaderFactory(),
+    pageProvider(),
+    itemProvider(),
+    loader(),
     stopCondition
 )
 
@@ -42,14 +44,14 @@ class SyncObservable<out S : SourceItem, P : RefPage, R : RefItem>(
     private val stopCondition: ((SourceItem) -> Boolean)? = null
 ) : AdSource<S> {
     
-    override suspend fun subscribe(onNext: (S) -> Unit) {
+    override suspend fun subscribe(onNext: suspend (S) -> Unit) {
         itemSeq().forEach { item ->
-            delay(1000)
+            
             onNext(item)
             if (stopCondition?.invoke(item)?.not() == true) {
                 return
             }
-            delay(1000)
+            
         }
     }
     

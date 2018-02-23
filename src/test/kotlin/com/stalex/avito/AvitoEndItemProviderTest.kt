@@ -2,9 +2,12 @@ package com.stalex.avito
 
 import io.kotlintest.matchers.should
 import io.kotlintest.specs.StringSpec
+import nolambda.skrape.SkrapeLogger
 
 class AvitoEndItemProviderTest : StringSpec() {
     init {
+        SkrapeLogger.enableLog = false
+    
         "test" {
             val file: String = javaClass.classLoader.getResource("realty_item.htm").file
             val load = AvitoEndItemProvider()
