@@ -3,7 +3,7 @@ import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import kotlin.coroutines.experimental.buildSequence
 
-inline fun printThreadName() = println("current thread (${Throwable().stackTrace[0] }}; ): ${Thread.currentThread().name}")
+inline fun printThreadName() = println("current thread (${Throwable().stackTrace[0]}}; ): ${Thread.currentThread().name}")
 
 //fun main(args: Array<String>) {
 //    launch { // launch new coroutine in background and continue
@@ -17,16 +17,16 @@ inline fun printThreadName() = println("current thread (${Throwable().stackTrace
 //}
 
 fun main(args: Array<String>) = runBlocking {
-//    testJoin()
+    //    testJoin()
     testSeq()
 }
 
 suspend fun testSeq() {
     val seq = buildSequence {
-//        delay(1000)
+        //        delay(1000)
         yieldAll((1..1000))
     }
-    
+
     seq.forEach {
         delay(1000)
         print(it)
@@ -35,16 +35,16 @@ suspend fun testSeq() {
 
 private suspend fun testJoin() {
     printThreadName()
-    
+
     val job = launch {
         // launch new coroutine and keep a reference to its Job
         printThreadName()
-        
+
         delay(3000L)
         println("World!")
     }
     printThreadName()
-    
+
     println("Hello,")
     job.join()
 }

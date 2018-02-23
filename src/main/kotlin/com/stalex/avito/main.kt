@@ -1,7 +1,22 @@
 package com.stalex.avito
 
-import com.stalex.*
-import kotlinx.coroutines.experimental.*
+import com.stalex.ConsoleAdLogger
+import com.stalex.DefaultPipeline
+import com.stalex.EndItemProvider
+import com.stalex.LoaderFactory
+import com.stalex.MongoStorer
+import com.stalex.PipelineLink
+import com.stalex.RefItem
+import com.stalex.RefItemProvider
+import com.stalex.RefPageImpl
+import com.stalex.RefPageProvider
+import com.stalex.SourceItem
+import com.stalex.createSyncObservable
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 import mu.KotlinLogging
 import nolambda.skrape.SkrapeLogger
 
@@ -32,7 +47,6 @@ class AvitoFactory : LoaderFactory<AvitoSourceItem, RefPageImpl, AvitoRefItem> {
     override fun loader(): EndItemProvider<AvitoRefItem, AvitoSourceItem> = AvitoEndItemProvider()
 }
 
-
 fun avitoSyncFactory() =
     AvitoFactory().createSyncObservable {
         true
@@ -61,9 +75,7 @@ fun launchPipeline(): Job {
 }
 
 class AvitoDelay : PipelineLink<AvitoSourceItem> {
-    override suspend fun handle(e: AvitoSourceItem) {
-        delay(2000)
+    suspend override fun handle(e: AvitoSourceItem) {
+        delay(5000)
     }
-    
 }
-

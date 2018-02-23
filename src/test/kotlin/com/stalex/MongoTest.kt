@@ -11,19 +11,19 @@ import org.litote.kmongo.getCollection
 import java.util.*
 
 class MongoTest : StringSpec() {
-
+    
     init {
-
+        
         val client = KMongo.createClient() //get com.mongodb.MongoClient new instance
         val database = client.getDatabase("test") //normal java driver usage
         val collection = database.getCollection<AvitoSourceItem>() //KMongo extension method
-
+        
         val url = Random().nextInt().toString()
         "test insert" {
             collection.insertOne(AvitoSourceItem(url))
             val find: FindIterable<AvitoSourceItem> = collection.find(AvitoSourceItem::class.java)
         }
-
+        
         "test find" {
             collection.findOne("{url:\"$url\"}") should {
                 it != null
@@ -31,7 +31,7 @@ class MongoTest : StringSpec() {
         }
         "test delete" {
             collection.deleteOne("{url:\"$url\"}")
-
+            
             collection.findOne("{url:\"$url\"}") should {
                 it == null
             }

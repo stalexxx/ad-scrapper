@@ -43,26 +43,25 @@ class SyncObservable<out S : SourceItem, P : RefPage, R : RefItem>(
     private val loader: EndItemProvider<R, S>,
     private val stopCondition: ((SourceItem) -> Boolean)? = null
 ) : AdSource<S> {
-    
-    override suspend fun subscribe(onNext: suspend (S) -> Unit) {
+
+    suspend override fun subscribe(onNext: suspend (S) -> Unit) {
         itemSeq().forEach { item ->
-            
+
             onNext(item)
             if (stopCondition?.invoke(item)?.not() == true) {
                 return
             }
-            
         }
     }
-    
+
     fun itemSeq(): Sequence<S> = buildSequence {
-        
+
         val pageSequence: Sequence<P> = buildSequence {
             (0..100).forEach { page ->
                 yield(pageProvider.get(page))
             }
         }
-        
+
         pageSequence.iterator().forEach { page ->
             itemProvider.get(page).forEach { item ->
                 yield(loader.load(item))

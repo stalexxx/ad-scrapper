@@ -8,7 +8,11 @@ import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.content.OutgoingContent
 import io.ktor.content.TextContent
-import io.ktor.features.*
+import io.ktor.features.CallLogging
+import io.ktor.features.Compression
+import io.ktor.features.ContentNegotiation
+import io.ktor.features.DefaultHeaders
+import io.ktor.features.StatusPages
 import io.ktor.gson.gson
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -31,7 +35,7 @@ fun main(args: Array<String>) {
 }
 
 fun Application.main() {
-    
+
     install(StatusPages) {
         status(HttpStatusCode.NotFound) {
             call.respond(TextContent("${it.value} ${it.description}", ContentType.Text.Plain.withCharset(Charsets.UTF_8), it))
@@ -40,7 +44,7 @@ fun Application.main() {
             call.respond(HttpStatusCode.InternalServerError)
         }
     }
-    
+
     install(DefaultHeaders)
     install(Compression)
     install(CallLogging)
@@ -51,26 +55,26 @@ fun Application.main() {
             setPrettyPrinting()
         }
     }
-    
+
     routing {
         get("/") {
             call.respondText("Hello, world!!!!!!!!!!", ContentType.Text.Html)
         }
-        
+
         get("/test") {
             call.respond(1)
         }
-        
+
         get("/items/{limit}") {
             val param = call.parameters["limit"]?.toInt() ?: 10
             call.respondJson(MongoStorer.collection.find().limit(param).toList())
         }
     }
-    
+
     SkrapeLogger.enableLog = false
-    
+
     launchPipeline()
-    
+
 //    job.join()
 }
 
@@ -80,4 +84,3 @@ suspend fun ApplicationCall.respondJson(obj: Any, status: HttpStatusCode? = null
     val message = TextContent(gson.toJson(obj), defaultTextContentType(ContentType.Application.Json), status).apply(configure)
     return respond(message)
 }
-

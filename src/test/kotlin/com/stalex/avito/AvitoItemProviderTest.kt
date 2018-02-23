@@ -9,7 +9,7 @@ import nolambda.skrape.SkrapeLogger
 class AvitoSourceItemProviderTest : StringSpec() {
     init {
         SkrapeLogger.enableLog = false
-    
+
         val file = javaClass.classLoader.getResource("nedvizhimost").file
         val provider = AvitoSourceItemProvider()
         val result = provider.get(RefPageImpl(file))
