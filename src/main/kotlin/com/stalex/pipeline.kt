@@ -1,6 +1,7 @@
 package com.stalex
 
 import com.stalex.avito.AvitoSourceItem
+import mu.KotlinLogging
 import org.litote.kmongo.KMongo
 import org.litote.kmongo.getCollection
 
@@ -22,7 +23,7 @@ class DefaultPipeline<E : SourceItem>(
         return this
     }
     
-    override fun start() {
+    override suspend fun start() {
         source?.subscribe { e ->
             this.chain
                 .stream()
@@ -35,13 +36,13 @@ class DefaultPipeline<E : SourceItem>(
 }
 
 interface AdSource<out E : SourceItem> {
-    fun subscribe(handler: (E) -> Unit)
+    suspend fun subscribe(handler: (E) -> Unit)
 }
 
 interface Pipeline<T : Pipeline<T, E>, E : SourceItem> {
     fun withSource(source: AdSource<E>): T
     fun with(link: PipelineLink<E>): T
-    fun start()
+    suspend fun start()
 }
 
 
@@ -85,17 +86,13 @@ class MongoStorer : AdStorer<AvitoSourceItem> {
     }
 }
 
-class MemoryStorer : AdStorer<AvitoSourceItem> {
-    val list = mutableListOf<AvitoSourceItem>()
-    override fun handle(e: AvitoSourceItem) {
-        list += e
-    }
-}
-
 class ConsoleAdLogger : AdLogger<AvitoSourceItem> {
-    override fun handle(e: AvitoSourceItem) {
-        print("stored $e")
-    }
+    private val logger = KotlinLogging.logger {}
     
+    override fun handle(e: AvitoSourceItem) {
+        logger.info {
+            e
+        }
+    }
 }
 

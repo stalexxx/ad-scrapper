@@ -1,10 +1,9 @@
 package com.stalex
 
+import kotlinx.coroutines.experimental.delay
 import kotlin.coroutines.experimental.buildSequence
 
 interface SourceItem
-
-interface SourceMart
 
 interface RefPage
 class RefPageImpl(val url: String) : RefPage
@@ -42,31 +41,28 @@ class SyncObservable<out S : SourceItem, P : RefPage, R : RefItem>(
     private val loader: EndItemProvider<R, S>,
     private val stopCondition: ((SourceItem) -> Boolean)? = null
 ) : AdSource<S> {
-
-    override fun subscribe(onNext: (S) -> Unit) {
-        itemSeq().iterator().let {
-            while (it.hasNext()) {
-                val item = it.next()
-                onNext(item)
-                if (stopCondition?.invoke(item)?.not() == true) {
-                    return
-                }
+    
+    override suspend fun subscribe(onNext: (S) -> Unit) {
+        itemSeq().forEach { item ->
+            delay(1000)
+            onNext(item)
+            if (stopCondition?.invoke(item)?.not() == true) {
+                return
             }
+            delay(1000)
         }
     }
-
+    
     fun itemSeq(): Sequence<S> = buildSequence {
-
+        
         val pageSequence: Sequence<P> = buildSequence {
             (0..100).forEach { page ->
-                val refPage: P = pageProvider.get(page)
-                yield(refPage)
+                yield(pageProvider.get(page))
             }
         }
-
+        
         pageSequence.iterator().forEach { page ->
             itemProvider.get(page).forEach { item ->
-                println("loading in ${Thread.currentThread()}")
                 yield(loader.load(item))
             }
         }

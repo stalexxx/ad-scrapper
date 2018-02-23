@@ -1,6 +1,7 @@
 package com.stalex
 
 import com.google.gson.GsonBuilder
+import com.stalex.avito.launchPipeline
 import io.ktor.application.Application
 import io.ktor.application.ApplicationCall
 import io.ktor.application.call
@@ -19,6 +20,7 @@ import io.ktor.routing.get
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import nolambda.skrape.SkrapeLogger
 import java.text.DateFormat
 
 fun main(args: Array<String>) {
@@ -64,6 +66,12 @@ fun Application.main() {
             call.respondJson(MongoStorer.collection.find().limit(param).toList())
         }
     }
+    
+    SkrapeLogger.enableLog = false
+    
+    launchPipeline()
+    
+//    job.join()
 }
 
 val gson = GsonBuilder().setDateFormat(DateFormat.LONG).setPrettyPrinting().create()

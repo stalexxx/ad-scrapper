@@ -6,11 +6,12 @@ import io.kotlintest.specs.StringSpec
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.experimental.runBlocking
 
 class AdSourceTest : StringSpec() {
     init {
 
-        val storer: AdStorer<AvitoSourceItem> = mockk<MemoryStorer>()
+        val storer: AdStorer<AvitoSourceItem> = mockk()
         every { storer.handle(any()) } returns Unit
         val logger: AdLogger<AvitoSourceItem> = mockk<ConsoleAdLogger>()
         every { logger.handle(any()) } returns Unit
@@ -18,7 +19,7 @@ class AdSourceTest : StringSpec() {
         val pipeline = DefaultPipeline<AvitoSourceItem>()
             .withSource(
                 object : AdSource<AvitoSourceItem> {
-                    override fun subscribe(handler: (AvitoSourceItem) -> Unit) {
+                    override suspend fun subscribe(handler: (AvitoSourceItem) -> Unit) {
                         (1..100).map { AvitoSourceItem("url") }.forEach(handler)
                     }
                 }
@@ -27,10 +28,13 @@ class AdSourceTest : StringSpec() {
             .with(logger)
 
         "verify size" {
-            pipeline.start()
-            verify(exactly = 100) {
-                logger.handle(any())
-                storer.handle(any())
+            runBlocking {
+                pipeline.start()
+    
+                verify(exactly = 100) {
+                    logger.handle(any())
+                    storer.handle(any())
+                }
             }
         }
     }
@@ -64,20 +68,24 @@ class LasySeqAbstractionTest : StringSpec() {
         "sync observable test" {
             var counter = 0
 
-            SyncObservable(
-                pageProvider,
-                itemProvider,
-                loader,
-                {
-                    counter++
-                    counter < 20
-                }
-            ).subscribe({
-                println("verifing in ${Thread.currentThread()}")
-
-                verify { loader.load(any()) }
-            })
-            counter shouldBe 20
+            runBlocking {
+    
+                SyncObservable(
+                    pageProvider,
+                    itemProvider,
+                    loader,
+                    {
+                        counter++
+                        counter < 20
+                    }
+                ).subscribe({
+                    println("verifing in ${Thread.currentThread()}")
+        
+                    verify { loader.load(any()) }
+                })
+                
+                counter shouldBe 20
+            }
         }
     }
 

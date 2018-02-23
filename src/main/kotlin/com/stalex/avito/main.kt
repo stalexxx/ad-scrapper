@@ -1,9 +1,16 @@
 package com.stalex.avito
 
 import com.stalex.*
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
+import mu.KotlinLogging
 import nolambda.skrape.SkrapeLogger
 
-data class AvitoRefItem(var link: String, val text:String = "") : RefItem
+private val logger = KotlinLogging.logger {}
+
+data class AvitoRefItem(var link: String, val text: String = "") : RefItem
 
 data class AvitoSourceItem(
     val url: String,
@@ -22,25 +29,35 @@ data class AvitoSourceItem(
 
 data class AvitoUser(val link: String, val name: String)
 
-fun avitoSyncFactory() = createSyncObservable(
-    { AvitoPageProvider() },
-    { AvitoSourceItemProvider() },
-    { AvitoEndItemProvider() },
-    { true }//todo write exist checker
-)
+fun avitoSyncFactory() =
+    createSyncObservable(
+        { AvitoPageProvider() },
+        { AvitoSourceItemProvider() },
+        { AvitoEndItemProvider() },
+        { true }//todo write exist checker
+    )
 
-fun main(args: Array<String>) {
-
-
+fun main(args: Array<String>) = runBlocking {
     SkrapeLogger.enableLog = false
-
-    val pipeline = DefaultPipeline<AvitoSourceItem>()
-        .withSource(
-            avitoSyncFactory()
-        )
-        .with(MongoStorer())
-        .with(ConsoleAdLogger())
-        .start()
-
-
+    
+    val job = launchPipeline()
+    
+    job.join()
 }
+
+fun launchPipeline(): Job {
+    val logger = KotlinLogging.logger {}
+    val x by lazy {  }
+    return launch(CommonPool) {
+        SkrapeLogger.enableLog = false
+        logger.info("thread: ${Thread.currentThread().name}")
+        DefaultPipeline<AvitoSourceItem>()
+            .withSource(
+                avitoSyncFactory()
+            )
+            .with(MongoStorer())
+            .with(ConsoleAdLogger())
+            .start()
+    }
+}
+
