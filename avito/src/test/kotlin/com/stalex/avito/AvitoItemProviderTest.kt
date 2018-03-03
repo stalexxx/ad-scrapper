@@ -10,7 +10,7 @@ class AvitoSourceItemProviderTest : StringSpec() {
     init {
         SkrapeLogger.enableLog = false
 
-        val file = javaClass.classLoader.getResource("nedvizhimost").file
+        val file = javaClass.classLoader.getResource("nedvizhimost.kt").file
         val provider = AvitoSourceItemProvider()
         val result = provider.get(RefPageImpl(file))
         "test size file" {
@@ -18,7 +18,7 @@ class AvitoSourceItemProviderTest : StringSpec() {
         }
 
         val urlProvider = AvitoSourceItemProvider()
-        val urlResult = urlProvider.get(RefPageImpl("https://www.avito.ru/sankt-peterburg/nedvizhimost"))
+        val urlResult = urlProvider.get(RefPageImpl("https://www.avito.ru/sankt-peterburg/nedvizhimost.kt"))
         "test size url" {
             urlResult.size should {
                 it in 1..100
