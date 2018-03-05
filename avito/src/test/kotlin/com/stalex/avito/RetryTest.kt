@@ -35,6 +35,6 @@ class RetryTest : StringSpec() {
             val result = RetryableParser(parser, default = { -1 }).parse("")
 
             result shouldBe -1
-        }.config(enabled = false)
+        }.config(enabled = true)
     }
 }
