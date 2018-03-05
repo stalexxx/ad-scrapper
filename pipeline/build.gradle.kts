@@ -4,7 +4,6 @@ import org.jetbrains.kotlin.gradle.dsl.Coroutines
 
 val fuel_version: String by ext
 
-
 plugins {
     kotlin("jvm")
     id ("io.spring.dependency-management")
@@ -25,4 +24,5 @@ dependencies {
     testCompile("io.mockk:mockk")
 
     compile("org.slf4j:slf4j-jdk14")
+    compile("io.github.microutils:kotlin-logging")
 }

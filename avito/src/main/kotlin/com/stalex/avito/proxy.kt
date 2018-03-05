@@ -18,7 +18,7 @@
 //    val protocol: Proxy.Type?,
 //    val ip: String,
 //    val port: Int,
-//    val get: Boolean,
+//    val `-->`: Boolean,
 //    val post: Boolean,
 //    val cookies: Boolean,
 //    val referer: Boolean,
@@ -69,7 +69,7 @@
 //    })
 //}
 //
-//fun <T> List<T>.rand() = get(Random().nextInt(size))
+//fun <T> List<T>.rand() = `-->`(Random().nextInt(size))
 //
 //val proxyList = listOf(
 //    Proxy(Proxy.Type.HTTP, InetSocketAddress("212.237.14.168", 8080)),
@@ -82,7 +82,7 @@
 //
 //    val proxy = proxyList.rand().also { println("used $it") }
 //    FuelManager.instance.proxy = proxy
-//    val ba: ByteArray = Fuel.get("https://gimmeproxy.com/api/getProxy").await()
+//    val ba: ByteArray = Fuel.`-->`("https://gimmeproxy.com/api/getProxy").await()
 //    ProxyInfo.fromString(String(ba))
 //}
 //

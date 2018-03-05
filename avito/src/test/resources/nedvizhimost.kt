@@ -149,7 +149,7 @@ document.cookie.split(';').forEach(function(cookie) {
  }
  }
  if ( window.addEventListener ) {
- window.addEventListener( 'load', triggerCallback );
+ window.addEventListener( 'parse', triggerCallback );
  } else if ( window.attachEvent ) {
  window.attachEvent( 'onload', triggerCallback );
  }

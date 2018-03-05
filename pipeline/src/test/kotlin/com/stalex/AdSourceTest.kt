@@ -4,14 +4,14 @@ import com.stalex.pipeline.AdLogger
 import com.stalex.pipeline.AdSource
 import com.stalex.pipeline.AdStorer
 import com.stalex.pipeline.DefaultPipeline
-import com.stalex.pipeline.EndItemProvider
 import com.stalex.pipeline.RefItem
 import com.stalex.pipeline.RefItemImpl
-import com.stalex.pipeline.RefItemProvider
 import com.stalex.pipeline.RefPage
 import com.stalex.pipeline.RefPageImpl
 import com.stalex.pipeline.RefPageProvider
-import com.stalex.pipeline.SourceItem
+import com.stalex.pipeline.Scrap
+import com.stalex.pipeline.ScrapCollectionParser
+import com.stalex.pipeline.ScrapParser
 import com.stalex.pipeline.SyncObservable
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
@@ -25,17 +25,17 @@ import kotlinx.coroutines.experimental.runBlocking
 class AdSourceTest : StringSpec() {
     init {
 
-        val storer: AdStorer<SourceItem> = mockk()
+        val storer: AdStorer<Scrap> = mockk()
         coEvery { storer.handle(any()) } returns Unit
-        val logger: AdLogger<SourceItem> = mockk()
+        val logger: AdLogger<Scrap> = mockk()
         coEvery { logger.handle(any()) } returns Unit
 
-        val pipeline = DefaultPipeline<SourceItem>()
+        val pipeline = DefaultPipeline<Scrap>()
             .withSource(
-                object : AdSource<SourceItem> {
-                    suspend override fun subscribe(handler: suspend (SourceItem) -> Unit) {
-                        (1..10).map { mockk<SourceItem>(relaxed = true) }.forEach {
-                            handler(it)
+                object : AdSource<Scrap> {
+                    suspend override fun subscribe(onNext: suspend (Scrap) -> Unit) {
+                        (1..10).map { mockk<Scrap>(relaxed = true) }.forEach {
+                            onNext(it)
                         }
                     }
                 }
@@ -61,24 +61,28 @@ class LasySeqAbstractionTest : StringSpec() {
         val pageProvider: RefPageProvider<RefPageImpl> = mockk()
         every { pageProvider.get(any()) } returns RefPageImpl("url")
 
-        val itemProvider: RefItemProvider<RefPage, RefItem> = mockk()
-        every { itemProvider.get(any()) } returns (1..5).map { RefItemImpl("$it") }
+        val itemProvider: ScrapCollectionParser<RefPage, RefItem> = mockk()
+        every { itemProvider.parse(any()) } returns (0 until 5).map { RefItemImpl("$it") }
 
-        val loader: EndItemProvider<RefItem, SourceItem> = mockk()
-        every { loader.load(any()) } returns mockk(relaxed = true)
+        val loader: ScrapParser<RefItem, Scrap> = mockk(relaxed = true)
+        every {
+            loader.parse(any())
+        } returns mockk(relaxed = true)
 
         "itemSeq coroutine test" {
             val seq = SyncObservable(
                 pageProvider,
                 itemProvider,
                 loader
-            ).itemSeq().iterator()
-            (1..20).forEach {
-                seq.next()
+            ).itemProducer().iterator()
+            runBlocking {
+                (0 until 4).forEach {
+                    seq.next()
+                }
             }
 
-            verify(exactly = 20) { loader.load(any()) }
-        } //.config(enabled = false)
+            verify(exactly = 5) { loader.parse(any()) } //на один больше потому что запись не совсем ленивая
+        }.config(enabled = true)
 
         "sync observable test" {
             var counter = 0
@@ -90,17 +94,15 @@ class LasySeqAbstractionTest : StringSpec() {
                     itemProvider,
                     loader,
                     {
-                        counter++
                         counter < 20
                     }
                 ).subscribe({
                     println("verifing in ${Thread.currentThread()}")
-
-                    verify { loader.load(any()) }
+                    counter++
+                    verify { loader.parse(any()) }
                 })
-
-                counter shouldBe 20
             }
-        }
+            counter shouldBe 50
+        }.config(enabled = false)
     }
 }

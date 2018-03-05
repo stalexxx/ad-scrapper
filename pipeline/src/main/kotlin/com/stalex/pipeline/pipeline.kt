@@ -2,7 +2,7 @@ package com.stalex.pipeline
 
 typealias PipelineChain<E> = MutableList<PipelineLink<E>>
 
-class DefaultPipeline<E : SourceItem>(
+class DefaultPipeline<E : Scrap>(
     private val chain: PipelineChain<E> = mutableListOf()
 ) : Pipeline<DefaultPipeline<E>, E> {
 
@@ -27,11 +27,11 @@ class DefaultPipeline<E : SourceItem>(
     }
 }
 
-interface AdSource<out E : SourceItem> {
-    suspend fun subscribe(handler: suspend (E) -> Unit)
+interface AdSource<out E : Scrap> {
+    suspend fun subscribe(onNext: suspend (E) -> Unit)
 }
 
-interface Pipeline<T : Pipeline<T, E>, E : SourceItem> {
+interface Pipeline<T : Pipeline<T, E>, E : Scrap> {
     fun withSource(source: AdSource<E>): T
     fun with(link: PipelineLink<E>): T
     suspend fun start()
@@ -41,5 +41,5 @@ interface PipelineLink<E> {
     suspend fun handle(e: E)
 }
 
-interface AdStorer<T : SourceItem> : PipelineLink<T>
-interface AdLogger<T : SourceItem> : PipelineLink<T>
+interface AdStorer<T : Scrap> : PipelineLink<T>
+interface AdLogger<T : Scrap> : PipelineLink<T>

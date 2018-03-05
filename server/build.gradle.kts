@@ -12,7 +12,7 @@ plugins {
 }
 
 application {
-    mainClassName = "samples.HelloCoroutinesKt"
+    mainClassName = "io.ktor.server.netty.DevelopmentEngine"
 }
 
 kotlin {
@@ -29,13 +29,11 @@ dependencies {
     compile("io.ktor:ktor-server-core:$ktor_version")
     compile("io.ktor:ktor-server-netty:$ktor_version")
     compile("io.ktor:ktor-gson:$ktor_version")
-    
+
     compile("com.github.esafirm:skrape:1.0.0")
-    
-    
+
     compile("com.github.kittinunf.fuel:fuel")
     compile("com.github.kittinunf.fuel:fuel-gson")
-    
+
     testCompile("io.mockk:mockk")
 }
-

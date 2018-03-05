@@ -1,16 +1,17 @@
 package com.stalex.avito
 
+import com.github.salomonbrys.kodein.instance
 import com.stalex.pipeline.AdLogger
 import com.stalex.pipeline.AdStorer
 import com.stalex.pipeline.DefaultPipeline
-import com.stalex.pipeline.EndItemProvider
 import com.stalex.pipeline.LoaderFactory
 import com.stalex.pipeline.PipelineLink
 import com.stalex.pipeline.RefItem
-import com.stalex.pipeline.RefItemProvider
 import com.stalex.pipeline.RefPageImpl
 import com.stalex.pipeline.RefPageProvider
-import com.stalex.pipeline.SourceItem
+import com.stalex.pipeline.Scrap
+import com.stalex.pipeline.ScrapCollectionParser
+import com.stalex.pipeline.ScrapParser
 import com.stalex.pipeline.createSyncObservable
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.Job
@@ -24,7 +25,7 @@ private val logger = KotlinLogging.logger {}
 
 data class AvitoRefItem(var link: String, val text: String = "") : RefItem
 
-data class AvitoSourceItem(
+data class AvitoScrap(
     val url: String,
     val description: String? = null,
     val title: String? = null,
@@ -37,14 +38,14 @@ data class AvitoSourceItem(
     val price: String? = null,
     val subPrice: String? = null
 
-) : SourceItem
+) : Scrap
 
 data class AvitoUser(val link: String, val name: String)
 
-class AvitoFactory : LoaderFactory<AvitoSourceItem, RefPageImpl, AvitoRefItem> {
+class AvitoFactory : LoaderFactory<AvitoScrap, RefPageImpl, AvitoRefItem> {
     override fun pageProvider(): RefPageProvider<RefPageImpl> = AvitoPageProvider()
-    override fun itemProvider(): RefItemProvider<RefPageImpl, AvitoRefItem> = AvitoSourceItemProvider()
-    override fun loader(): EndItemProvider<AvitoRefItem, AvitoSourceItem> = AvitoEndItemProvider()
+    override fun itemProvider(): ScrapCollectionParser<RefPageImpl, AvitoRefItem> = AvitoSourceItemProvider(kodein.instance())
+    override fun loader(): ScrapParser<AvitoRefItem, AvitoScrap> = AvitoScrapParser(kodein.instance())
 }
 
 fun avitoSyncFactory() =
@@ -62,8 +63,9 @@ fun launchPipeline(): Job {
     val logger = KotlinLogging.logger {}
     return launch(CommonPool) {
         SkrapeLogger.enableLog = false
+
         logger.info("thread: ${Thread.currentThread().name}")
-        DefaultPipeline<AvitoSourceItem>()
+        DefaultPipeline<AvitoScrap>()
             .withSource(
                 avitoSyncFactory()
             )
@@ -74,13 +76,13 @@ fun launchPipeline(): Job {
     }
 }
 
-class AvitoDelay : PipelineLink<AvitoSourceItem> {
-    suspend override fun handle(e: AvitoSourceItem) {
+class AvitoDelay : PipelineLink<AvitoScrap> {
+    suspend override fun handle(e: AvitoScrap) {
         delay(5000)
     }
 }
 
-class MongoStorer : AdStorer<AvitoSourceItem> {
+class MongoStorer : AdStorer<AvitoScrap> {
 
     companion object {
 //        val client = KMongo.createClient()
@@ -88,15 +90,15 @@ class MongoStorer : AdStorer<AvitoSourceItem> {
 //        val collection = database.getCollection<AvitoSourceItem>()
     }
 
-    suspend override fun handle(e: AvitoSourceItem) {
+    suspend override fun handle(e: AvitoScrap) {
 //        collection.insertOne(e) todo move to another module
     }
 }
 
-class ConsoleAdLogger : AdLogger<AvitoSourceItem> {
+class ConsoleAdLogger : AdLogger<AvitoScrap> {
     private val logger = KotlinLogging.logger {}
 
-    suspend override fun handle(e: AvitoSourceItem) {
+    suspend override fun handle(e: AvitoScrap) {
         logger.info {
             e
         }

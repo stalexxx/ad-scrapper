@@ -1,4 +1,4 @@
-package samples
+package com.stalex.server
 
 import com.google.gson.GsonBuilder
 import io.ktor.application.Application
@@ -18,19 +18,17 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.withCharset
 import io.ktor.response.defaultTextContentType
 import io.ktor.response.respond
-import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.routing
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.netty.Netty
 import java.text.DateFormat
 
-fun main(args: Array<String>) {
-    val server = embeddedServer(Netty, 8080, module = {
-        main()
-    })
-    server.start(wait = true)
-}
+//fun main(args: Array<String>) {
+//    val server = embeddedServer(Netty, 8080,
+//        watchPaths = listOf(),
+//        module = Application::main
+//        )
+//    server.start(wait = true)
+//}
 
 fun Application.main() {
 
@@ -56,7 +54,7 @@ fun Application.main() {
 
     routing {
         get("/") {
-            call.respondText("Hello, world!!!!!!!!!!", ContentType.Text.Html)
+            call.respond(1 to 6)
         }
 
         get("/test") {

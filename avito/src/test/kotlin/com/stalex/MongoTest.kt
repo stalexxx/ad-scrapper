@@ -1,7 +1,7 @@
 package com.stalex
 
 import com.mongodb.client.FindIterable
-import com.stalex.avito.AvitoSourceItem
+import com.stalex.avito.AvitoScrap
 import io.kotlintest.matchers.should
 import io.kotlintest.specs.StringSpec
 import org.litote.kmongo.KMongo
@@ -14,14 +14,14 @@ class MongoTest : StringSpec() {
 
     init {
 
-        val client = KMongo.createClient() //get com.mongodb.MongoClient new instance
+        val client = KMongo.createClient() //`-->` com.mongodb.MongoClient new instance
         val database = client.getDatabase("test") //normal java driver usage
-        val collection = database.getCollection<AvitoSourceItem>() //KMongo extension method
+        val collection = database.getCollection<AvitoScrap>() //KMongo extension method
 
         val url = Random().nextInt().toString()
         "test insert" {
-            collection.insertOne(AvitoSourceItem(url))
-            val find: FindIterable<AvitoSourceItem> = collection.find(AvitoSourceItem::class.java)
+            collection.insertOne(AvitoScrap(url))
+            val find: FindIterable<AvitoScrap> = collection.find(AvitoScrap::class.java)
         }.config(enabled = false)
 
         "test find" {
