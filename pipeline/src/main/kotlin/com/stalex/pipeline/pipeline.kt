@@ -19,16 +19,18 @@ class DefaultPipeline<E : Scrap>(
     }
 
     suspend override fun start() {
-        source?.subscribe { e ->
+        source?.subscribe ({ e ->
             for (it in this.chain) {
                 it.handle(e)
             }
-        }
+        }, {
+            TODO()
+        })
     }
 }
 
 interface AdSource<out E : Scrap> {
-    suspend fun subscribe(onNext: suspend (E) -> Unit)
+    suspend fun subscribe(onNext: suspend (E) -> Unit, onError: (Throwable) -> Unit = {})
 }
 
 interface Pipeline<T : Pipeline<T, E>, E : Scrap> {

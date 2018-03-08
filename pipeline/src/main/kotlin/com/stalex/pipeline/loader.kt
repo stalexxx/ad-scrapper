@@ -1,7 +1,11 @@
 package com.stalex.pipeline
 
-import kotlinx.coroutines.experimental.channels.consumeEach
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.produce
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 import mu.KotlinLogging
 import kotlin.coroutines.experimental.buildSequence
 
@@ -16,7 +20,7 @@ interface RefItem
 data class RefItemImpl(val id: String) : RefItem
 
 interface Parser<in Source, out Target> {
-    fun parse(page: Source): Target
+    suspend fun parse(page: Source): Target
 }
 
 interface ScrapCollectionParser<in T : RefPage, out R : RefItem> : Parser<T, List<R>>
@@ -33,7 +37,7 @@ interface LoaderFactory<out S : Scrap, P : RefPage, R : RefItem> {
 }
 
 fun <S : Scrap, P : RefPage, R : RefItem> LoaderFactory<S, P, R>.createSyncObservable(
-    stopCondition: ((Scrap) -> Boolean)?
+    stopCondition: ((R) -> Boolean) = { false }
 ) = SyncObservable(
     pageProvider(),
     itemProvider(),
@@ -41,59 +45,55 @@ fun <S : Scrap, P : RefPage, R : RefItem> LoaderFactory<S, P, R>.createSyncObser
     stopCondition
 )
 
-class SyncObservable<out S : Scrap, P : RefPage, R : RefItem>(
-    private val pageProvider: RefPageProvider<P>,
-    private val itemProvider: ScrapCollectionParser<P, R>,
-    private val scrapParser: ScrapParser<R, S>,
-    private val shouldStop: ((Scrap) -> Boolean)? = null
-) : AdSource<S> {
+class SyncObservable<out TScrap : Scrap, out TRef : RefItem, TPageRef : RefPage>(
+    private val pageProvider: RefPageProvider<TPageRef>,
+    private val itemProvider: ScrapCollectionParser<TPageRef, TRef>,
+    private val scrapParser: ScrapParser<TRef, TScrap>,
+    private val shouldStop: ((TRef) -> Boolean) = { false },
+    private val maxActive: Int = 100
+) : AdSource<TScrap> {
 
-    suspend override fun subscribe(onNext: suspend (S) -> Unit) {
-        itemProducer().consumeEach {
-            onNext(it)
+    suspend override fun subscribe(onNext: suspend (TScrap) -> Unit, onError: (Throwable) -> Unit) {
+
+        val refProducer = itemRefProducer()
+
+        val jobs = mutableListOf<Job>()
+
+        while (!refProducer.isClosedForReceive) {
+            val ref = refProducer.receive()
+
+            jobs.removeIf { it.isCompleted || it.isCancelled }
+            if (jobs.count() > maxActive) {
+                logger.info { "current active job count=${jobs.count()}, delaying" }
+                delay(100)
+            }
+
+            jobs += launch(CommonPool) {
+                val scrap: Try<TScrap> = scrapParser.retryable().parse(ref)
+                when (scrap) {
+                    is Try.Success -> onNext(scrap.result)
+                    is Try.Error -> onError(scrap.error)
+                }
+            }
+            if (shouldStop(ref)) refProducer.cancel()
+        }
+
+        runBlocking {
+            jobs.filter { it.isActive }.forEach { it.join() }
         }
     }
 
-    fun itemProducer() = produce {
-        val pageSequence = produce {
-            (0 until 10).forEach { page ->
-                val element = pageProvider.get(page)
-                logger.info { "for page $page recieve $element" }
-                send(element)
-
-//                delay(1000)
-            }
-        }
-
-        pageSequence.consumeEach { page ->
-            val scrapCollection = itemProvider.parse(page)
-            logger.info { "scrapCollection$scrapCollection" }
-            scrapCollection.forEach { item ->
-                logger.info { }
-                val scrap = scrapParser.parse(item)
-//                if (shouldStop?.invoke(scrap) == true) {
-//                    return@forEach
-//                } else {
-                    send(scrap)
-
-//                    delay(2000)
-//                }
-            }
-        }
-    }
-
-    fun itemSeq(): Sequence<S> = buildSequence {
-
-        val pageSequence: Sequence<P> = buildSequence {
-            (0..100).forEach { page ->
+    fun itemRefProducer() = produce(capacity = 50) {
+        buildSequence {
+            (0..Int.MAX_VALUE).forEach { page ->
                 yield(pageProvider.get(page))
             }
-        }
-
-        pageSequence.iterator().forEach { page ->
-            itemProvider.parse(page).forEach { item ->
-                yield(scrapParser.parse(item))
-            }
+        }.forEach { pageRef ->
+            val refs = itemProvider.retryable().parse(pageRef)
+            refs.fold { throw RuntimeException() }
+                ?.forEach { ref ->
+                    send(ref)
+                }
         }
     }
 }

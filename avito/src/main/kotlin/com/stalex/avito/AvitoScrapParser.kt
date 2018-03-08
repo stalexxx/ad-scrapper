@@ -10,7 +10,7 @@ import nolambda.skrape.nodes.to
 
 class AvitoScrapParser(var skrape: Skrape<String>) : ScrapParser<AvitoRefItem, AvitoScrap> {
 
-    override fun parse(ref: AvitoRefItem): AvitoScrap {
+    suspend override fun parse(ref: AvitoRefItem): AvitoScrap {
 
         val (title, address, description, params, advParams, user, price, subPrice, metro) =
             skrape.requestPage<Results>(ref.link) {

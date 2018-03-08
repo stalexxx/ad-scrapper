@@ -10,7 +10,7 @@ import nolambda.skrape.nodes.to
 
 class AvitoSourceItemProvider(var skrape: Skrape<String>) : ScrapCollectionParser<RefPageImpl, AvitoRefItem> {
 
-    override fun parse(page: RefPageImpl): List<AvitoRefItem> {
+    suspend override fun parse(page: RefPageImpl): List<AvitoRefItem> {
 
         val result = skrape.requestPage<LoadItemResult>(page.url) {
             "items" to query("a.item-description-title-link") {
