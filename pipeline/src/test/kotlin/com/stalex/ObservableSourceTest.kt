@@ -1,9 +1,9 @@
 package com.stalex
 
 import com.stalex.pipeline.AdLogger
-import com.stalex.pipeline.AdSource
 import com.stalex.pipeline.AdStorer
 import com.stalex.pipeline.DefaultPipeline
+import com.stalex.pipeline.ObservableSource
 import com.stalex.pipeline.Scrap
 import io.kotlintest.specs.StringSpec
 import io.mockk.coEvery
@@ -11,7 +11,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.experimental.runBlocking
 
-class AdSourceTest : StringSpec() {
+class ObservableSourceTest : StringSpec() {
     init {
 
         val storer: AdStorer<Scrap> = mockk()
@@ -21,8 +21,8 @@ class AdSourceTest : StringSpec() {
 
         val pipeline = DefaultPipeline<Scrap>()
             .withSource(
-                object : AdSource<Scrap> {
-                    suspend override fun subscribe(onNext: suspend (Scrap) -> Unit, onError: (Throwable) -> Unit) {
+                object : ObservableSource<Scrap> {
+                    override suspend fun subscribe(onNext: suspend (Scrap) -> Unit, onError: (Throwable) -> Unit) {
                         (1..10).map { mockk<Scrap>(relaxed = true) }.forEach {
                             onNext(it)
                         }

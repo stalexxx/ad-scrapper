@@ -1,1 +1,1 @@
-include("server", "pipeline", "avito")
+include("server", "pipeline", "avito", "proxy")

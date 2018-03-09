@@ -51,9 +51,9 @@ class SyncObservable<out TScrap : Scrap, out TRef : RefItem, TPageRef : RefPage>
     private val scrapParser: ScrapParser<TRef, TScrap>,
     private val shouldStop: ((TRef) -> Boolean) = { false },
     private val maxActive: Int = 100
-) : AdSource<TScrap> {
+) : ObservableSource<TScrap> {
 
-    suspend override fun subscribe(onNext: suspend (TScrap) -> Unit, onError: (Throwable) -> Unit) {
+    override suspend fun subscribe(onNext: suspend (TScrap) -> Unit, onError: (Throwable) -> Unit) {
 
         val refProducer = itemRefProducer()
 
@@ -69,7 +69,7 @@ class SyncObservable<out TScrap : Scrap, out TRef : RefItem, TPageRef : RefPage>
             }
 
             jobs += launch(CommonPool) {
-                val scrap: Try<TScrap> = scrapParser.retryable().parse(ref)
+                val scrap: Try<TScrap> = scrapParser.retry().parse(ref)
                 when (scrap) {
                     is Try.Success -> onNext(scrap.result)
                     is Try.Error -> onError(scrap.error)
@@ -89,7 +89,7 @@ class SyncObservable<out TScrap : Scrap, out TRef : RefItem, TPageRef : RefPage>
                 yield(pageProvider.get(page))
             }
         }.forEach { pageRef ->
-            val refs = itemProvider.retryable().parse(pageRef)
+            val refs = itemProvider.retry().parse(pageRef)
             refs.fold { throw RuntimeException() }
                 ?.forEach { ref ->
                     send(ref)

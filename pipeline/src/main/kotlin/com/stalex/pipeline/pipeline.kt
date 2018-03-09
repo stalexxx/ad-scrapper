@@ -6,10 +6,10 @@ class DefaultPipeline<E : Scrap>(
     private val chain: PipelineChain<E> = mutableListOf()
 ) : Pipeline<DefaultPipeline<E>, E> {
 
-    var source: AdSource<E>? = null
+    var mySource: ObservableSource<E>? = null
 
-    override fun withSource(source: AdSource<E>): DefaultPipeline<E> {
-        this.source = source
+    override fun withSource(source: ObservableSource<E>): DefaultPipeline<E> {
+        this.mySource = source
         return this
     }
 
@@ -18,8 +18,8 @@ class DefaultPipeline<E : Scrap>(
         return this
     }
 
-    suspend override fun start() {
-        source?.subscribe ({ e ->
+    override suspend fun start() {
+        mySource?.subscribe ({ e ->
             for (it in this.chain) {
                 it.handle(e)
             }
@@ -29,12 +29,12 @@ class DefaultPipeline<E : Scrap>(
     }
 }
 
-interface AdSource<out E : Scrap> {
+interface ObservableSource<out E : Scrap> {
     suspend fun subscribe(onNext: suspend (E) -> Unit, onError: (Throwable) -> Unit = {})
 }
 
 interface Pipeline<T : Pipeline<T, E>, E : Scrap> {
-    fun withSource(source: AdSource<E>): T
+    fun withSource(source: ObservableSource<E>): T
     fun with(link: PipelineLink<E>): T
     suspend fun start()
 }

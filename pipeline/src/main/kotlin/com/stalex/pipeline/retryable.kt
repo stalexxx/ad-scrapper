@@ -23,14 +23,14 @@ suspend fun <T> Try(block: suspend () -> T): Try<T> =
         Try.Error(e)
     }
 
-fun <T, R> Parser<T, R>.retryable() = RetryableParser(this)
+fun <T, R> Parser<T, R>.retry(count: Int = 5) = RetryableParser(this, count)
 
 class RetryableParser<in T, out R>(
     val parser: Parser<T, R>,
-    val retryCount: Int = 5
+    val retryCount: Int
 ) : Parser<T, Try<R>> {
 
-    suspend override fun parse(page: T): Try<R> {
+    override suspend fun parse(page: T): Try<R> {
 
         var e: Exception? = null
         (0 until retryCount).forEach {

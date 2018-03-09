@@ -24,7 +24,9 @@ dependencies {
     compile(kotlin("stdlib"))
     compile(kotlin("stdlib-jre8"))
     compile(kotlin("reflect"))
-//    compile(project(":core"))
+
+    compile(project(":avito"))
+    compile(project(":proxy"))
 
     compile("io.ktor:ktor-server-core:$ktor_version")
     compile("io.ktor:ktor-server-netty:$ktor_version")

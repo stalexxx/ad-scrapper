@@ -24,14 +24,14 @@ fun main(args: Array<String>) {
     val itemProvider: ScrapCollectionParser<RefPage, RefItem> = object : ScrapCollectionParser<RefPage, RefItem> {
         var id = 0
 
-        suspend override fun parse(page: RefPage): List<RefItem> {
+        override suspend fun parse(page: RefPage): List<RefItem> {
             return (0 until 50).map { id += 1; RefItemImpl("$id"); }
         }
     }
 
     val parsedCount = AtomicInteger()
     val loader: ScrapParser<RefItem, Scrap> = object : ScrapParser<RefItem, Scrap> {
-        suspend override fun parse(page: RefItem): Scrap {
+        override suspend fun parse(page: RefItem): Scrap {
             delay(10)
             parsedCount.incrementAndGet()
             val value: Scrap = object : Scrap {}

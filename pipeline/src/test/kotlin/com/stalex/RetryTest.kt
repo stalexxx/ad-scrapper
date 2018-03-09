@@ -2,7 +2,7 @@ package com.stalex
 
 import com.stalex.pipeline.Parser
 import com.stalex.pipeline.Try
-import com.stalex.pipeline.retryable
+import com.stalex.pipeline.retry
 import com.stalex.pipeline.success
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
@@ -18,7 +18,7 @@ class RetryTest : StringSpec() {
 
                 val parser = mockk<Parser<String, Int>>()
                 coEvery { parser.parse(any()) } returns 1
-                val result = parser.retryable().parse("")
+                val result = parser.retry().parse("")
 
                 result shouldBe 1.success()
             }
@@ -30,7 +30,7 @@ class RetryTest : StringSpec() {
                 val parser = mockk<Parser<String, String>>()
                 coEvery { parser.parse(any()) } throws IllegalStateException()
 
-                val result = parser.retryable().parse("")
+                val result = parser.retry().parse("")
 
                 (result as Try.Error).error should {
                     it is IllegalStateException

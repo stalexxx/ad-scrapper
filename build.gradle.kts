@@ -5,8 +5,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     base
-    kotlin("jvm") version "1.2.21" apply false
-    id("org.jlleitschuh.gradle.ktlint") version "3.0.1"
+    kotlin("jvm") version "1.2.30" apply false
+    id("org.jlleitschuh.gradle.ktlint") version "3.1.0"
     id ("io.spring.dependency-management") version "1.0.4.RELEASE"
     `project-report`
     `jacoco`
@@ -17,6 +17,7 @@ plugins {
 //}
 
 ktlint {
+    version = "0.19.0"
     verbose = true
     outputToConsole = true
 }

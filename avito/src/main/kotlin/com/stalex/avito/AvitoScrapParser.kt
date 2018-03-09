@@ -10,7 +10,7 @@ import nolambda.skrape.nodes.to
 
 class AvitoScrapParser(var skrape: Skrape<String>) : ScrapParser<AvitoRefItem, AvitoScrap> {
 
-    suspend override fun parse(ref: AvitoRefItem): AvitoScrap {
+    override suspend fun parse(ref: AvitoRefItem): AvitoScrap {
 
         val (title, address, description, params, advParams, user, price, subPrice, metro) =
             skrape.requestPage<Results>(ref.link) {
@@ -88,8 +88,10 @@ data class Param(
         get() = type.text.replace(":", "") to entry.substringAfter(type.text)
 }
 
-data class AdvParam(var type: SingleTextList,
-                    var value: SingleTextList)
+data class AdvParam(
+    var type: SingleTextList,
+    var value: SingleTextList
+)
 
 data class HasText(var text: String)
 

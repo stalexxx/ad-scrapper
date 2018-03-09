@@ -1,9 +1,6 @@
 package com.stalex.avito
 
 import com.github.salomonbrys.kodein.instance
-import com.stalex.pipeline.AdLogger
-import com.stalex.pipeline.AdStorer
-import com.stalex.pipeline.DefaultPipeline
 import com.stalex.pipeline.LoaderFactory
 import com.stalex.pipeline.PipelineLink
 import com.stalex.pipeline.RefItem
@@ -13,13 +10,8 @@ import com.stalex.pipeline.Scrap
 import com.stalex.pipeline.ScrapCollectionParser
 import com.stalex.pipeline.ScrapParser
 import com.stalex.pipeline.createSyncObservable
-import kotlinx.coroutines.experimental.CommonPool
-import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
 import mu.KotlinLogging
-import nolambda.skrape.SkrapeLogger
 
 private val logger = KotlinLogging.logger {}
 
@@ -53,54 +45,8 @@ fun avitoSyncFactory() =
         true
     }
 
-fun main(args: Array<String>) = runBlocking {
-    SkrapeLogger.enableLog = false
-    val job = launchPipeline()
-    job.join()
-}
-
-fun launchPipeline(): Job {
-    val logger = KotlinLogging.logger {}
-    return launch(CommonPool) {
-        SkrapeLogger.enableLog = false
-
-        logger.info("thread: ${Thread.currentThread().name}")
-        DefaultPipeline<AvitoScrap>()
-            .withSource(
-                avitoSyncFactory()
-            )
-            .with(MongoStorer())
-            .with(ConsoleAdLogger())
-            .with(AvitoDelay())
-            .start()
-    }
-}
-
 class AvitoDelay : PipelineLink<AvitoScrap> {
-    suspend override fun handle(e: AvitoScrap) {
+    override suspend fun handle(e: AvitoScrap) {
         delay(5000)
-    }
-}
-
-class MongoStorer : AdStorer<AvitoScrap> {
-
-    companion object {
-//        val client = KMongo.createClient()
-//        val database = client.getDatabase("avito")!!
-//        val collection = database.getCollection<AvitoSourceItem>()
-    }
-
-    suspend override fun handle(e: AvitoScrap) {
-//        collection.insertOne(e) todo move to another module
-    }
-}
-
-class ConsoleAdLogger : AdLogger<AvitoScrap> {
-    private val logger = KotlinLogging.logger {}
-
-    suspend override fun handle(e: AvitoScrap) {
-        logger.info {
-            e
-        }
     }
 }
