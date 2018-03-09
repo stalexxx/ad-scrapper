@@ -4,7 +4,7 @@ import com.github.salomonbrys.kodein.instance
 import com.stalex.pipeline.LoaderFactory
 import com.stalex.pipeline.PipelineLink
 import com.stalex.pipeline.RefItem
-import com.stalex.pipeline.RefPageImpl
+import com.stalex.pipeline.PageRefImpl
 import com.stalex.pipeline.RefPageProvider
 import com.stalex.pipeline.Scrap
 import com.stalex.pipeline.ScrapCollectionParser
@@ -34,10 +34,10 @@ data class AvitoScrap(
 
 data class AvitoUser(val link: String, val name: String)
 
-class AvitoFactory : LoaderFactory<AvitoScrap, RefPageImpl, AvitoRefItem> {
-    override fun pageProvider(): RefPageProvider<RefPageImpl> = AvitoPageProvider()
-    override fun itemProvider(): ScrapCollectionParser<RefPageImpl, AvitoRefItem> = AvitoSourceItemProvider(kodein.instance())
-    override fun loader(): ScrapParser<AvitoRefItem, AvitoScrap> = AvitoScrapParser(kodein.instance())
+class AvitoFactory : LoaderFactory<AvitoScrap, PageRefImpl, AvitoRefItem> {
+    override fun pageProvider(): RefPageProvider<PageRefImpl> = AvitoPageProvider()
+    override fun itemProvider(): ScrapCollectionParser<PageRefImpl, AvitoRefItem> = AvitoSourceItemProvider(kodein.instance())
+    override fun parser(): ScrapParser<AvitoRefItem, AvitoScrap> = AvitoScrapParser(kodein.instance())
 }
 
 fun avitoSyncFactory() =

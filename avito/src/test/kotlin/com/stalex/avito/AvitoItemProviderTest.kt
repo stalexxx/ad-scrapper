@@ -1,7 +1,7 @@
 package com.stalex.avito
 
 import com.github.salomonbrys.kodein.instance
-import com.stalex.pipeline.RefPageImpl
+import com.stalex.pipeline.PageRefImpl
 import io.kotlintest.matchers.should
 import io.kotlintest.matchers.shouldBe
 import io.kotlintest.specs.StringSpec
@@ -18,7 +18,7 @@ class AvitoScrapProviderTest : StringSpec() {
 
                 val provider = AvitoSourceItemProvider(kodein.instance())
 
-                val result = provider.parse(RefPageImpl(file))
+                val result = provider.parse(PageRefImpl(file))
                 result.size shouldBe 51
             }
         }
@@ -27,7 +27,7 @@ class AvitoScrapProviderTest : StringSpec() {
             runBlocking {
 
                 val urlProvider = AvitoSourceItemProvider(kodein.instance())
-                val urlResult = urlProvider.parse(RefPageImpl("https://www.avito.ru/sankt-peterburg/nedvizhimost.kt"))
+                val urlResult = urlProvider.parse(PageRefImpl("https://www.avito.ru/sankt-peterburg/nedvizhimost.kt"))
 
                 urlResult.size should {
                     it in 1..100

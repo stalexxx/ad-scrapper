@@ -2,14 +2,12 @@ package com.stalex
 
 import com.stalex.pipeline.RefItem
 import com.stalex.pipeline.RefItemImpl
-import com.stalex.pipeline.RefPage
-import com.stalex.pipeline.RefPageImpl
-import com.stalex.pipeline.RefPageProvider
 import com.stalex.pipeline.Scrap
-import com.stalex.pipeline.ScrapCollectionParser
 import com.stalex.pipeline.ScrapParser
 import com.stalex.pipeline.SyncObservable
 import kotlinx.coroutines.experimental.CoroutineScope
+import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import kotlinx.coroutines.experimental.channels.produce
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.runBlocking
 import java.util.concurrent.atomic.AtomicInteger
@@ -17,15 +15,11 @@ import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.EmptyCoroutineContext
 
 fun main(args: Array<String>) {
-    val pageProvider: RefPageProvider<RefPageImpl> = object : RefPageProvider<RefPageImpl> {
-        override fun get(index: Int): RefPageImpl = RefPageImpl("url")
-    }
+    val size = 10000
 
-    val itemProvider: ScrapCollectionParser<RefPage, RefItem> = object : ScrapCollectionParser<RefPage, RefItem> {
-        var id = 0
-
-        override suspend fun parse(page: RefPage): List<RefItem> {
-            return (0 until 50).map { id += 1; RefItemImpl("$id"); }
+    val channel: ReceiveChannel<RefItem> = produce {
+        (0 until size).forEach {
+            send(RefItemImpl("$it"))
         }
     }
 
@@ -40,14 +34,9 @@ fun main(args: Array<String>) {
     }
 
     runBlockingBM {
-        var counter = 0
         SyncObservable(
-            pageProvider,
-            itemProvider,
-            loader,
-            {
-                counter++ > 10000
-            }
+            channel,
+            loader
         ).subscribe({
             println("observing in ${Thread.currentThread()}")
         })

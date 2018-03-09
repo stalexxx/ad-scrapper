@@ -2,31 +2,26 @@ package com.stalex
 
 import com.stalex.pipeline.RefItem
 import com.stalex.pipeline.RefItemImpl
-import com.stalex.pipeline.RefPage
-import com.stalex.pipeline.RefPageImpl
-import com.stalex.pipeline.RefPageProvider
 import com.stalex.pipeline.Scrap
-import com.stalex.pipeline.ScrapCollectionParser
 import com.stalex.pipeline.ScrapParser
 import com.stalex.pipeline.SyncObservable
 import io.kotlintest.specs.StringSpec
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.experimental.channels.ReceiveChannel
+import kotlinx.coroutines.experimental.channels.produce
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.runBlocking
 
 class LasySeqAbstractionTest : StringSpec() {
     init {
-        val pageProvider: RefPageProvider<RefPageImpl> = mockk()
-        every { pageProvider.get(any()) } returns RefPageImpl("url")
+        val size = 20
 
-        val itemProvider: ScrapCollectionParser<RefPage, RefItem> = mockk()
-        var id = 0
-        coEvery { itemProvider.parse(any()) } coAnswers {
-            delay(1000)
-            (0 until 5).map { id += 1; RefItemImpl("$id"); }
+        val channel: ReceiveChannel<RefItem> = produce {
+            (0 until size).forEach {
+                send(RefItemImpl("$it"))
+            }
         }
 
         val loader: ScrapParser<RefItem, Scrap> = mockk(relaxed = true)
@@ -37,22 +32,21 @@ class LasySeqAbstractionTest : StringSpec() {
             mockk(relaxed = true)
         }
 
-        "itemSeq coroutine test" {
-            val seq = SyncObservable(
-                pageProvider,
-                itemProvider,
-                loader
-            ).itemRefProducer().iterator()
-            runBlocking {
-                (0 until 4).forEach {
-                    seq.next()
-                }
-            }
-
-            coVerify(exactly = 5) {
-                loader.parse(any())
-            } //на один больше потому что запись не совсем ленивая
-        }.config(enabled = false)
+//        "itemSeq coroutine test" {
+//            val seq = SyncObservable(
+//                channel,
+//                loader
+//            )
+//            runBlocking {
+//                (0 until 4).forEach {
+////                    seq.next()
+//                }
+//            }
+//
+//            coVerify(exactly = 5) {
+//                loader.parse(any())
+//            } //на один больше потому что запись не совсем ленивая
+//        }.config(enabled = false)
 
         "sync observable test" {
             var counter = 0
@@ -60,17 +54,13 @@ class LasySeqAbstractionTest : StringSpec() {
             runBlocking {
 
                 SyncObservable(
-                    pageProvider,
-                    itemProvider,
-                    loader,
-                    {
-                        counter++ > 20
-                    }
+                    channel,
+                    loader
                 ).subscribe({
                     println("observing in ${Thread.currentThread()}")
                 })
             }
-            coVerify(atLeast = counter - 1, atMost = counter + 1) { loader.parse(any()) }
+            coVerify(exactly = size) { loader.parse(any()) }
         }.config(enabled = true)
     }
 }

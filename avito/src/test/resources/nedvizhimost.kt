@@ -161,7 +161,7 @@ document.cookie.split(';').forEach(function(cookie) {
  </script>
  <script>!function(){"use strict";var t=document.createElement("script");t.type="text/javascript",t.async=!0;var e=new Image,a=String(Date.now())+Math.random().toFixed(8);e.src="//www.avito.ru/stat/ad?k=stu:bab&r="+a,t.onload=function(){window.blockAdBlock.onDetected(function(){e.src="//www.avito.ru/stat/ad?k=stu:bab_1&r="+a}),window.blockAdBlock.onNotDetected(function(){e.src="//www.avito.ru/stat/ad?k=stu:bab_0&r="+a})},t.src="/s/build/vendor/helpful-lib/some-pretty-script.js";var o=document.getElementsByTagName("script")[0];o.parentNode.insertBefore(t,o)}();</script>  </head> <body class="   ab-test-bx-218"  id="catalog" >
   <noscript> <iframe src="//www.googletagmanager.com/ns.html?id=GTM-KP9Q9H" height="0" width="0" style="display:none;visibility:hidden"></iframe> </noscript>
-    <script src="//yastatic.net/pcode/adfox/loader.js"></script>
+    <script src="//yastatic.net/pcode/adfox/parser.js"></script>
    <script>
  (function() {
  var banners = window.banners = window.banners || {};

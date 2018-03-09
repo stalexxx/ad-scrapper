@@ -1,7 +1,7 @@
 package com.stalex.proxy.hideMyName
 
 import com.stalex.pipeline.RefItem
-import com.stalex.pipeline.RefPageImpl
+import com.stalex.pipeline.PageRefImpl
 import com.stalex.pipeline.Scrap
 import com.stalex.pipeline.ScrapCollectionParser
 import com.stalex.proxy.requestPage
@@ -29,8 +29,8 @@ class ProxyInfo(
     }
 }
 
-class PageParser(var skrape: Skrape<String>) : ScrapCollectionParser<RefPageImpl, ProxyInfo> {
-    override suspend fun parse(page: RefPageImpl): List<ProxyInfo> {
+class PageParser(var skrape: Skrape<String>) : ScrapCollectionParser<PageRefImpl, ProxyInfo> {
+    override suspend fun parse(page: PageRefImpl): List<ProxyInfo> {
         val result = skrape.requestPage<LoadItemResult>(page.url) {
             "items" to query("table.proxy__t tbody tr") {
                 "tds" to query("td") {

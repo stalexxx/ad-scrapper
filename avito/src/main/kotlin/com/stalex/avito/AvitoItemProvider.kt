@@ -1,6 +1,6 @@
 package com.stalex.avito
 
-import com.stalex.pipeline.RefPageImpl
+import com.stalex.pipeline.PageRefImpl
 import com.stalex.pipeline.ScrapCollectionParser
 import nolambda.skrape.Skrape
 import nolambda.skrape.nodes.attr
@@ -8,9 +8,9 @@ import nolambda.skrape.nodes.query
 import nolambda.skrape.nodes.text
 import nolambda.skrape.nodes.to
 
-class AvitoSourceItemProvider(var skrape: Skrape<String>) : ScrapCollectionParser<RefPageImpl, AvitoRefItem> {
+class AvitoSourceItemProvider(var skrape: Skrape<String>) : ScrapCollectionParser<PageRefImpl, AvitoRefItem> {
 
-    override suspend fun parse(page: RefPageImpl): List<AvitoRefItem> {
+    override suspend fun parse(page: PageRefImpl): List<AvitoRefItem> {
 
         val result = skrape.requestPage<LoadItemResult>(page.url) {
             "items" to query("a.item-description-title-link") {
