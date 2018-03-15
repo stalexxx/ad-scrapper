@@ -2,7 +2,7 @@
 
 import org.jetbrains.kotlin.gradle.dsl.Coroutines
 
-val ktor_version = "0.9.1"
+val ktor_version = "0.9.2-alpha-2"
 //val fuel_version: String by ext
 
 plugins {

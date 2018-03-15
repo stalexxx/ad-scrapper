@@ -8,6 +8,8 @@ plugins {
     kotlin("jvm") version "1.2.30" apply false
     id("org.jlleitschuh.gradle.ktlint") version "3.1.0"
     id ("io.spring.dependency-management") version "1.0.4.RELEASE"
+    id ("com.github.ben-manes.versions") version "0.17.0"
+
     `project-report`
     `jacoco`
 }
@@ -69,17 +71,18 @@ subprojects {
         this.dependencyManagement {
 
             val fuel_version = "1.12.1"
-            val mockk_version = "1.7.9"
+            val mockk_version = "1.7.10"
             val slf4j_version = "1.7.25"
             val kotlintest_version = "2.0.7"
-            val coroutines_version = "0.22.3"
+            val coroutines_version = "0.22.5"
+            val kotlin_logging = "1.5.3"
 
 //
             dependencies {
                 dependency("io.kotlintest:kotlintest:$kotlintest_version")
                 dependency("io.mockk:mockk:$mockk_version")
                 dependency("org.slf4j:slf4j-jdk14:$slf4j_version")
-                dependency("io.github.microutils:kotlin-logging:1.4.9")
+                dependency("io.github.microutils:kotlin-logging:$kotlin_logging")
                 dependency("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version")
 
                 dependency("com.github.salomonbrys.kodein:kodein:4.1.0")
